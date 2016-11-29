@@ -9,10 +9,10 @@ import pdb
 from ops import *
 from utils import *
 from random import shuffle
-from network import network 
+from network import networks
 class DCGAN(object):
     def __init__(self, sess, image_size=108, is_train=True,is_crop=True,\
-                 batch_size=32, input_size=64,ir_image_shape=[64, 64,1], normal_image_shape=[64, 64, 3],\
+                 batch_size=32, input_size=64,num_block=1,ir_image_shape=[64, 64,1], normal_image_shape=[64, 64, 3],\
 	         light_shape=[64,64,3],df_dim=64,dataset_name='default',checkpoint_dir=None):
 
 
@@ -24,6 +24,7 @@ class DCGAN(object):
         self.ir_image_shape = ir_image_shape
         self.df_dim = df_dim
         self.dataset_name = dataset_name
+	self.num_block = num_block
         self.checkpoint_dir = checkpoint_dir
 	self.use_queue = True
 	self.mean_nir = -0.3313 #-1~1
@@ -57,6 +58,10 @@ class DCGAN(object):
 
         self.ir_test = tf.placeholder(tf.float32, [1,600,800,1],name='ir_test')
         self.gt_test = tf.placeholder(tf.float32, [1,600,800,3],name='gt_test')
+	net  = networks(self.num_block,self.batch_size,self.df_dim)
+	self.G = net.generator(self.ir_images)
+	self.D = net.discriminator(self.normal_images)
+	self.D_  = net.discriminator(self.G,reuse=True)
 
         """
 	self.G = self.generator(self.ir_images)
