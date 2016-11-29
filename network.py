@@ -29,4 +29,15 @@ class networks(object):
         h3 = lrelu(d_bn3(conv2d(h2, self.df_dim*8, d_h=2,d_w=2,name='d_h3_conv')))
         h4 = linear(tf.reshape(h3, [self.batch_size, -1]), 1, 'd_h3_lin')
         return tf.nn.sigmoid(h4)
+    def sampler(self,nir):
+	tf.get_variable_scope().reuse_variables()
+	g_bn0 = batch_norm(self.batch_size,name='g_bn0')
+        h0 =tf.nn.relu(g_bn0(conv2d(nir,self.df_dim,name='g_nir0')))
+	g_bn1 = batch_norm(self.batch_size,name='g_bn1')
+        block =tf.nn.relu(g_bn1(conv2d(h0,20,k_h=1,k_w=1,name='g_nir1')))
+	for ii in range(self.num_block):
+            g_bn_block = batch_norm(self.batch_size,name='g_bn2_%s' %ii)
+            block =tf.nn.relu(g_bn_block(conv2d(block,20,k_h=3,k_w=3,name='g_nir2_%s' %ii)))
+        final =deconv2d(block,[self.batch_size,nir.get_shape().as_list()[1],nir.get_shape().as_list()[2],3],name='g_end',with_w=False)
+	return tf.nn.tanh(final)
 

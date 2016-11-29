@@ -45,9 +45,10 @@ class DCGAN(object):
 		q = tf.FIFOQueue(1000,[tf.float32,tf.float32],[[self.ir_image_shape[0],self.ir_image_shape[1],1],[self.normal_image_shape[0],self.normal_image_shape[1],3]])
 		self.enqueue_op = q.enqueue([self.ir_image_single,self.normal_image_single])
 		self.ir_images, self.normal_images = q.dequeue_many(self.batch_size)
-
+	"""
         self.ir_test = tf.placeholder(tf.float32, [1,600,800,1],name='ir_test')
         self.gt_test = tf.placeholder(tf.float32, [1,600,800,3],name='gt_test')
+	"""
 	net  = networks(self.num_block,self.batch_size,self.df_dim)
 	self.G = net.generator(self.ir_images)
 	self.D = net.discriminator(self.normal_images)
@@ -113,9 +114,9 @@ class DCGAN(object):
 		sum_L1 = 0.0
 		sum_g =0.0
 		if epoch ==0:
-		    train_log = open(os.path.join("logs",'train_epoch.log'),'w')
+		    train_log = open(os.path.join("logs",'train_%s.log' %config.dataset),'w')
 		else:
-	    	    train_log = open(os.path.join("logs",'train_epoch.log'),'aw')
+	    	    train_log = open(os.path.join("logs",'train_%s.log' %config.dataset),'aw')
 
 		for idx in xrange(0,batch_idxs):
         	     start_time = time.time()
