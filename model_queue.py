@@ -28,16 +28,6 @@ class DCGAN(object):
         self.checkpoint_dir = checkpoint_dir
 	self.use_queue = True
 	self.mean_nir = -0.3313 #-1~1
-	""""
-	self.g_bn1 = batch_norm(self.batch_size, name='g_bn1')
-	self.g_bn2 = batch_norm(self.batch_size, name='g_bn2')
-	self.g_bn3 = batch_norm(self.batch_size, name='g_bn3')
-	self.g_bn4 = batch_norm(self.batch_size, name='g_bn4')
-	self.g_bn5 = batch_norm(self.batch_size, name='g_bn5')
-	self.d_normal_bn1 = batch_norm(self.batch_size, name='d_bn1')
-        self.d_normal_bn2 = batch_norm(self.batch_size, name='d_bn2')
-        self.d_normal_bn3 = batch_norm(self.batch_size, name='d_bn3')
-	"""
 	self.build_model()
 
     def build_model(self):
@@ -63,11 +53,6 @@ class DCGAN(object):
 	self.D = net.discriminator(self.normal_images)
 	self.D_  = net.discriminator(self.G,reuse=True)
 
-        """
-	self.G = self.generator(self.ir_images)
-        self.D = self.discriminator(self.normal_images) # real image output
-        self.D_ = self.discriminator(self.G, reuse=True) #fake image output
-        """
 	# generated surface normal
         self.d_loss_real = binary_cross_entropy_with_logits(tf.ones_like(self.D), self.D)
         self.d_loss_fake = binary_cross_entropy_with_logits(tf.zeros_like(self.D_), self.D_)
@@ -171,34 +156,6 @@ class DCGAN(object):
 		     print("Epoch: [%2d] [%4d/%4d] time: %4.4f g_loss: %.6f L1_loss:%.4f" \
 		     % (epoch, idx, batch_idxs,time.time() - start_time,g_loss,L1_loss))
 	         self.save(config.checkpoint_dir,global_step)
-    """
-    def generator(self,nir):
-        h0 =tf.nn.relu(self.g_bn1(conv2d(nir,self.df_dim,name='g_nir_1')))
-        h1 =tf.nn.relu(self.g_bn2(conv2d(h0,20,k_h=1,k_w=1,name='g_nir_2')))
-        h2 =tf.nn.relu(self.g_bn3(conv2d(h1,20,k_h=3,k_w=3,name='g_nir_3_1')))
-        h3 =tf.nn.relu(self.g_bn4(conv2d(h2,20,k_h=3,k_w=3,name='g_nir_3_2')))
-	h4 =tf.nn.relu(self.g_bn5(conv2d(h3,self.df_dim,k_h=1,k_w=1,name='g_nir_4')))
-        h5 =deconv2d(h4,[self.batch_size,nir.get_shape().as_list()[1],nir.get_shape().as_list()[2],3],name='g_nir_5',with_w=False)
-	return tf.nn.tanh(h5)
-    def sample(self,nir):
-	tf.get_variable_scope().reuse_variables()
-        h0 =lrelu(conv2d(nir,self.df_dim,name='g_nir_1'))
-        h1 =lrelu(conv2d(h0,20,k_h=1,k_w=1,name='g_nir_2'))
-        h2 =lrelu(conv2d(h1,20,k_h=3,k_w=3,name='g_nir_3_1'))
-        h3 =lrelu(conv2d(h2,20,k_h=3,k_w=3,name='g_nir_3_2'))
-	h4 =lrelu(conv2d(h3,self.df_dim,k_h=1,k_w=1,name='g_nir_4'))
-        h5 =deconv2d(h4,[self.batch_size,nir.get_shape().as_list()[1],nir.get_shape().as_list()[2],3],name='g_nir_5',with_w=False)
-	
-    def discriminator(self, image, reuse=False):
-	if reuse:
-            tf.get_variable_scope().reuse_variables()    
-        h0 = lrelu(conv2d(image, self.df_dim, d_h=2,d_w=2,name='d_h0_conv'))
-        h1 = lrelu(self.d_normal_bn1(conv2d(h0, self.df_dim*2, d_h=2,d_w=2,name='d_h1_conv')))
-        h2 = lrelu(self.d_normal_bn2(conv2d(h1, self.df_dim*4, d_h=2,d_w=2,name='d_h2_conv')))
-        h3 = lrelu(self.d_normal_bn3(conv2d(h2, self.df_dim*8, d_h=2,d_w=2,name='d_h3_conv')))
-        h4 = linear(tf.reshape(h3, [self.batch_size, -1]), 1, 'd_h3_lin')
-        return tf.nn.sigmoid(h4)
-    """
     
     def save(self, checkpoint_dir, step):
         model_name = "DCGAN.model"

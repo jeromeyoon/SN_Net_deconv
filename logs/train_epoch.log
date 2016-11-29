@@ -1,0 +1,9 @@
+epoch 000000 mean_g 2.041425  mean_L1 0.169882
+epoch 000001 mean_g 3.009848  mean_L1 0.154076
+epoch 000002 mean_g 3.918437  mean_L1 0.154211
+epoch 000003 mean_g 4.190657  mean_L1 0.153584
+epoch 000004 mean_g 5.088037  mean_L1 0.154883
+epoch 000005 mean_g 5.352723  mean_L1 0.153263
+epoch 000006 mean_g 5.780735  mean_L1 0.153459
+epoch 000007 mean_g 6.244072  mean_L1 0.155677
+epoch 000008 mean_g 6.590767  mean_L1 0.154138
