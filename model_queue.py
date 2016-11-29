@@ -9,6 +9,7 @@ import pdb
 from ops import *
 from utils import *
 from random import shuffle
+from network import network 
 class DCGAN(object):
     def __init__(self, sess, image_size=108, is_train=True,is_crop=True,\
                  batch_size=32, input_size=64,ir_image_shape=[64, 64,1], normal_image_shape=[64, 64, 3],\
@@ -26,6 +27,7 @@ class DCGAN(object):
         self.checkpoint_dir = checkpoint_dir
 	self.use_queue = True
 	self.mean_nir = -0.3313 #-1~1
+	""""
 	self.g_bn1 = batch_norm(self.batch_size, name='g_bn1')
 	self.g_bn2 = batch_norm(self.batch_size, name='g_bn2')
 	self.g_bn3 = batch_norm(self.batch_size, name='g_bn3')
@@ -34,7 +36,7 @@ class DCGAN(object):
 	self.d_normal_bn1 = batch_norm(self.batch_size, name='d_bn1')
         self.d_normal_bn2 = batch_norm(self.batch_size, name='d_bn2')
         self.d_normal_bn3 = batch_norm(self.batch_size, name='d_bn3')
-
+	"""
 	self.build_model()
 
     def build_model(self):
@@ -56,10 +58,11 @@ class DCGAN(object):
         self.ir_test = tf.placeholder(tf.float32, [1,600,800,1],name='ir_test')
         self.gt_test = tf.placeholder(tf.float32, [1,600,800,3],name='gt_test')
 
+        """
 	self.G = self.generator(self.ir_images)
         self.D = self.discriminator(self.normal_images) # real image output
         self.D_ = self.discriminator(self.G, reuse=True) #fake image output
-        
+        """
 	# generated surface normal
         self.d_loss_real = binary_cross_entropy_with_logits(tf.ones_like(self.D), self.D)
         self.d_loss_fake = binary_cross_entropy_with_logits(tf.zeros_like(self.D_), self.D_)
@@ -163,7 +166,7 @@ class DCGAN(object):
 		     print("Epoch: [%2d] [%4d/%4d] time: %4.4f g_loss: %.6f L1_loss:%.4f" \
 		     % (epoch, idx, batch_idxs,time.time() - start_time,g_loss,L1_loss))
 	         self.save(config.checkpoint_dir,global_step)
-
+    """
     def generator(self,nir):
         h0 =tf.nn.relu(self.g_bn1(conv2d(nir,self.df_dim,name='g_nir_1')))
         h1 =tf.nn.relu(self.g_bn2(conv2d(h0,20,k_h=1,k_w=1,name='g_nir_2')))
@@ -190,8 +193,8 @@ class DCGAN(object):
         h3 = lrelu(self.d_normal_bn3(conv2d(h2, self.df_dim*8, d_h=2,d_w=2,name='d_h3_conv')))
         h4 = linear(tf.reshape(h3, [self.batch_size, -1]), 1, 'd_h3_lin')
         return tf.nn.sigmoid(h4)
+    """
     
-
     def save(self, checkpoint_dir, step):
         model_name = "DCGAN.model"
         model_dir = "%s_%s" % (self.dataset_name, self.batch_size)
