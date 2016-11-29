@@ -70,52 +70,6 @@ def conv2d(input_, output_dim,
 
         return conv
 
-
-def _bottleneck_block(name,input_,num_unit,output_dim1,output_dim2,train):
-    for i in range(0,num_unit):
-        ds = (i ==0)
-        if i ==0:
-            unit_name = '%sa' % name
-        else:
-            unit_name = '%s%s' % (name,i)
-        x= bottleneck_unit(unit_name, input_, output_dim1, output_dim2,train)
-    return x
-
-def bottleneck_block_letters(name,input_,num_unit,output_dim1,output_dim2,train=True):
-    return _bottleneck_block(name,input_,num_unit,output_dim1,output_dim2,train)
-
-
-def bottleneck_unit(name,input_,output_dim1,output_dim2,train):
-    in_chans = input_.get_shape()[3]
-    batch_size  = input_.get_shape()[0]
-    b1_bn = batch_norm(batch_size,name='bn%s_branch1' % name)
-    b2a_bn = batch_norm(batch_size,name='bn%s_branch2a' % name)
-    b2b_bn = batch_norm(batch_size,name='bn%s_branch2b' % name)
-    b2c_bn = batch_norm(batch_size,name='bn%s_branch2b' % name)
-
-    with tf.variable_scope('res%s' % name):
-        if in_chans == output_dim2:
-            b1 = input_
-        else:
-            with tf.variable_scope('branch1'):
-                b1 = conv2d(input_,output_dim2,d_h =1,d_w =1,name='res%s_branch1' % name)
-                b1 = b1_bn(b1,train=train)
-        with tf.variable_scope('branch2a'):
-                b2 = conv2d(input_,output_dim1,d_h =1,d_w =1,name='res%s_branch2a' % name)
-                b2 = b2a_bn(b2,train=train)
-                b2 = tf.nn.relu(b2)
-        with tf.variable_scope('branch2b'):
-                b2 = conv2d(b2,output_dim1,d_h =1,d_w =1,name='res%s_branch2b' % name)
-                b2 = b2b_bn(b2,train=train)
-                b2 = tf.nn.relu(b2)
-        with tf.variable_scope('branch2c'):
-                b2 = conv2d(b2,output_dim2,d_h =1,d_w =1,name='res%s_branch2c' % name)
-                b2 = b2c_bn(b2,train=train)
-        input_ = b1+b2 
-        return tf.nn.relu(input_)
-
-
-
 def deconv2d(input_, output_shape,
              k_h=1, k_w=1, d_h=1, d_w=1, stddev=0.02,
              name="deconv2d", with_w=False):
@@ -154,54 +108,3 @@ def linear(input_, output_size, scope=None, stddev=0.02, bias_start=0.0, with_w=
             return tf.matmul(input_, matrix) + bias, matrix, bias
         else:
             return tf.matmul(input_, matrix) + bias
-
-def scale_invariant(output,GT,mask,light):
-    num_elt = tf.to_float(GT.get_shape()[0] *GT.get_shape()[1] * GT.get_shape()[2] *GT.get_shape()[3])
-    #num_elt = tf.to_float(GT.get_shape()[0])
-    #computing GT log
-    GT = tf.div(tf.add(GT,1.),2.)
-    GT = tf.clip_by_value(GT,1e-10,1.0)
-    gt_log  = tf.log(GT)
-    
-    ### reconstruct NIR image ###
-    #norm surface normal
-    tmp = tf.sqrt(tf.reduce_sum(tf.square(output),3))
-    tmp = tf.expand_dims(tmp,-1)
-    """
-    exp10 = tf.ones_like(tmp)
-    exp10  = tf.mul(exp10,1e-10)
-    tmp2 = tf.equal(tmp,tf.constant(0.0))
-    tmp = tf.select(tmp2,exp10,tmp)
-    tmp = tf.expand_dims(tmp,-1)
-    """
-    output_nor = tf.div(output,tmp)
-    recon_NIR = tf.expand_dims(tf.reduce_sum(tf.mul(output_nor,light),3),-1) 
-    recon_NIR2 = tf.div(tf.add(recon_NIR,1.0),2.0) # convert to 0~1
-    recon_NIR2 = tf.mul(recon_NIR2,mask)
-    recon_NIR2 = tf.clip_by_value(recon_NIR2,1e-10,1.0)
-    recon_NIR_log = tf.log(recon_NIR2)
-    #########computing scale invariant ########
-    diff_log = tf.sub(recon_NIR_log,gt_log)
-    scale_inv1 = tf.div(tf.reduce_sum(tf.square(diff_log)),num_elt)
-    #scale_inv1 = tf.reduce_mean(tf.square(diff_log))
-    scale_inv2 = tf.square(tf.reduce_sum(diff_log))
-    #scale_inv3 = tf.div(scale_inv2,tf.square(tf.to_float(GT.get_shape()[0])))
-    scale_inv3 = tf.div(scale_inv2,tf.square(num_elt))
-    scale_inv = tf.abs(scale_inv1 - scale_inv3*0.001)
-    return [scale_inv,recon_NIR]
-
-    """
-    #norm surface normal
-    tmp = tf.sqrt(tf.reduce_sum(tf.square(output),3))
-    tmp = tf.expand_dims(tmp,-1)
-    output_nor = tf.div(output,tmp)
-    recon_NIR = tf.expand_dims(tf.reduce_sum(tf.mul(output_nor,light),3),-1)
-    
-    diff_log = tf.sub(recon_NIR,GT)
-    scale_inv1 = tf.reduce_mean(tf.square(diff_log))
-    scale_inv2 = tf.square(tf.reduce_sum(diff_log))
-    scale_inv3 = tf.div(scale_inv2,tf.square(num_elt))
-    scale_inv = scale_inv1 - scale_inv3
-    return [scale_inv,recon_NIR]
-    """
-

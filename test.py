@@ -6,7 +6,6 @@ import tensorflow as tf
 #from tensorflow.python.ops.script_ops import *
 from ops import *
 from utils import *
-from compute_ei import *
 
 class EVAL(object):
     def __init__(self, sess, image_size=108, is_crop=True,

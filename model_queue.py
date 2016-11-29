@@ -11,21 +11,17 @@ from utils import *
 from random import shuffle
 class DCGAN(object):
     def __init__(self, sess, image_size=108, is_train=True,is_crop=True,\
-                 batch_size=32, input_size=64, sample_size=32, ir_image_shape=[64, 64,1], normal_image_shape=[64, 64, 3],\
-	         light_shape=[64,64,3], gf_dim=64, df_dim=64,c_dim=3, dataset_name='default',checkpoint_dir=None):
+                 batch_size=32, input_size=64,ir_image_shape=[64, 64,1], normal_image_shape=[64, 64, 3],\
+	         light_shape=[64,64,3],df_dim=64,dataset_name='default',checkpoint_dir=None):
 
 
         self.sess = sess
         self.is_crop = is_crop
         self.batch_size = batch_size
         self.image_size = image_size
-        self.sample_size = sample_size
         self.normal_image_shape = normal_image_shape
-	self.light_shape = light_shape
         self.ir_image_shape = ir_image_shape
-        self.gf_dim = gf_dim
         self.df_dim = df_dim
-        self.c_dim = c_dim
         self.dataset_name = dataset_name
         self.checkpoint_dir = checkpoint_dir
 	self.use_queue = True
@@ -130,7 +126,7 @@ class DCGAN(object):
 
 		for idx in xrange(0,batch_idxs):
         	     start_time = time.time()
-		     _,summary_str =self.sess.run([d_optim, self.d__sum])
+		     _ =self.sess.run([d_optim])
 		     _,g_loss,L1_loss =self.sess.run([g_optim,self.g_loss,self.L1_loss])
 		     print("Epoch: [%2d] [%4d/%4d] time: %4.4f g_loss: %.6f L1_loss:%.4f" \
 		     % (epoch, idx, batch_idxs,time.time() - start_time,g_loss,L1_loss))
@@ -159,11 +155,11 @@ class DCGAN(object):
 		     #mask_mean = batch_mask * self.mean_nir
 		     #batch_images = batch_images- mask_mean
 		     # Update Normal D network
-		     _, summary_str= self.sess.run([d_optim, self.d__sum], feed_dict={self.ir_images: batch_images,self.normal_images:batchlabel_images })
+		     _= self.sess.run([d_optim], feed_dict={self.ir_images: batch_images,self.normal_images:batchlabel_images })
 		     self.writer.add_summary(summary_str, global_step.eval())
 
 		     # Update NIR G network
-		     _, summary_str,g_loss,L1_loss = self.sess.run([g_optim, self.g_sum,self.g_loss,self.L1_loss], feed_dict={ self.ir_images: batch_images,self.normal_images:batchlabel_images})
+		     _,g_loss,L1_loss = self.sess.run([g_optim,self.g_loss,self.L1_loss], feed_dict={ self.ir_images: batch_images,self.normal_images:batchlabel_images})
 		     print("Epoch: [%2d] [%4d/%4d] time: %4.4f g_loss: %.6f L1_loss:%.4f" \
 		     % (epoch, idx, batch_idxs,time.time() - start_time,g_loss,L1_loss))
 	         self.save(config.checkpoint_dir,global_step)
