@@ -6,10 +6,8 @@ from utils import *
 from network import networks
 class EVAL(object):
     def __init__(self, sess, image_size=108, is_crop=True,
-                 batch_size=1, input_size=64,ir_image_shape=[64, 64,1], normal_image_shape=[64, 64, 3],
-                 y_dim=None,df_dim=64,
-                 gfc_dim=1024, dfc_dim=1024, c_dim=3, dataset_name='default',
-                 checkpoint_dir=None):
+                 batch_size=1, num_block=1,ir_image_shape=[64, 64,1], normal_image_shape=[64, 64, 3],
+                 df_dim=64,dataset_name='default',checkpoint_dir=None):
 
         self.sess = sess
         self.is_crop = is_crop
@@ -20,6 +18,7 @@ class EVAL(object):
         self.df_dim = df_dim
         self.dataset_name = dataset_name
         self.checkpoint_dir = checkpoint_dir
+	self.num_block = num_block
         self.build_model()
 
     def build_model(self):

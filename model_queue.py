@@ -12,7 +12,7 @@ from random import shuffle
 from network import networks
 class DCGAN(object):
     def __init__(self, sess, image_size=108, is_train=True,is_crop=True,\
-                 batch_size=32, input_size=64,num_block=1,ir_image_shape=[64, 64,1], normal_image_shape=[64, 64, 3],\
+                 batch_size=32,num_block=1,ir_image_shape=[64, 64,1], normal_image_shape=[64, 64, 3],\
 	         light_shape=[64,64,3],df_dim=64,dataset_name='default',checkpoint_dir=None):
 
 

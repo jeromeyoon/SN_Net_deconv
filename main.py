@@ -47,9 +47,9 @@ def main(_):
     with tf.Session(config=tf.ConfigProto(gpu_options=gpu_config)) as sess:
         if FLAGS.is_train:
             dcgan = DCGAN(sess, image_size=FLAGS.image_size, batch_size=FLAGS.batch_size,\
-	    input_size=FLAGS.input_size,num_block = FLAGS.num_block,dataset_name=FLAGS.dataset,is_crop=FLAGS.is_crop, checkpoint_dir=FLAGS.checkpoint_dir)
+	    num_block = FLAGS.num_block,dataset_name=FLAGS.dataset,is_crop=FLAGS.is_crop, checkpoint_dir=FLAGS.checkpoint_dir)
         else:
-	    dcgan = EVAL(sess, input_size = 600, batch_size=1,ir_image_shape=[None,None,1],normal_image_shape=[None,None,3],dataset_name=FLAGS.dataset,\
+	    dcgan = EVAL(sess, batch_size=1,num_block=FLAGS.num_block,ir_image_shape=[600,800,1],normal_image_shape=[600,800,3],dataset_name=FLAGS.dataset,\
                       is_crop=False, checkpoint_dir=FLAGS.checkpoint_dir)
 	    print('deep model test \n')
 
