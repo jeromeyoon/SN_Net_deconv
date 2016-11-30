@@ -45,10 +45,6 @@ class DCGAN(object):
 		q = tf.FIFOQueue(1000,[tf.float32,tf.float32],[[self.ir_image_shape[0],self.ir_image_shape[1],1],[self.normal_image_shape[0],self.normal_image_shape[1],3]])
 		self.enqueue_op = q.enqueue([self.ir_image_single,self.normal_image_single])
 		self.ir_images, self.normal_images = q.dequeue_many(self.batch_size)
-	"""
-        self.ir_test = tf.placeholder(tf.float32, [1,600,800,1],name='ir_test')
-        self.gt_test = tf.placeholder(tf.float32, [1,600,800,3],name='gt_test')
-	"""
 	net  = networks(self.num_block,self.batch_size,self.df_dim)
 	self.G = net.generator(self.ir_images)
 	self.D = net.discriminator(self.normal_images)
@@ -120,10 +116,10 @@ class DCGAN(object):
 
 		for idx in xrange(0,batch_idxs):
         	     start_time = time.time()
-		     _ =self.sess.run([d_optim])
+		     _,d_loss_real,d_loss_fake =self.sess.run([d_optim,self.d_loss_real,self.d_loss_fake])
 		     _,g_loss,L1_loss =self.sess.run([g_optim,self.g_loss,self.L1_loss])
-		     print("Epoch: [%2d] [%4d/%4d] time: %4.4f g_loss: %.6f L1_loss:%.4f" \
-		     % (epoch, idx, batch_idxs,time.time() - start_time,g_loss,L1_loss))
+		     print("Epoch: [%2d] [%4d/%4d] time: %4.4f g_loss: %.6f L1_loss:%.4f d_loss_real:%.4f d_loss_fake:%.4f" \
+		     % (epoch, idx, batch_idxs,time.time() - start_time,g_loss,L1_loss,d_loss_real,d_loss_fake))
 		     sum_L1 += L1_loss 	
 		     sum_g += g_loss	
 		train_log.write('epoch %06d mean_g %.6f  mean_L1 %.6f\n' %(epoch,sum_g/(batch_idxs),sum_L1/(batch_idxs)))
@@ -155,7 +151,7 @@ class DCGAN(object):
 		     # Update NIR G network
 		     _,g_loss,L1_loss = self.sess.run([g_optim,self.g_loss,self.L1_loss], feed_dict={ self.ir_images: batch_images,self.normal_images:batchlabel_images})
 		     print("Epoch: [%2d] [%4d/%4d] time: %4.4f g_loss: %.6f L1_loss:%.4f" \
-		     % (epoch, idx, batch_idxs,time.time() - start_time,g_loss,L1_loss))
+		     % (epoch, idx, batch_idxs,time.time() - start_time,g_loss,L1_loss,d_loss))
 	         self.save(config.checkpoint_dir,global_step)
     
     def save(self, checkpoint_dir, step):
