@@ -20,15 +20,18 @@ class networks(object):
     def discriminator(self, image, reuse=False):
 	if reuse:
             tf.get_variable_scope().reuse_variables()    
-        h0 = lrelu(conv2d(image, self.df_dim, d_h=2,d_w=2,name='d_h0_conv'))
+        h0 = lrelu(conv2d(image, self.df_dim, k_h=3,k_w=3,d_h=2,d_w=2,name='d_h0_conv'))
 	d_bn1 = batch_norm(self.batch_size,name='d_bn1')
-        h1 = lrelu(d_bn1(conv2d(h0, self.df_dim*2, d_h=2,d_w=2,name='d_h1_conv')))
+        h1 = lrelu(d_bn1(conv2d(h0, self.df_dim*2, k_h=3,k_w=3,d_h=2,d_w=2,name='d_h1_conv')))
 	d_bn2 = batch_norm(self.batch_size,name='d_bn2')
-        h2 = lrelu(d_bn2(conv2d(h1, self.df_dim*4, d_h=2,d_w=2,name='d_h2_conv')))
+        h2 = lrelu(d_bn2(conv2d(h1, self.df_dim*4, k_h=3,k_w=3,d_h=2,d_w=2,name='d_h2_conv')))
 	d_bn3 = batch_norm(self.batch_size,name='d_bn3')
-        h3 = lrelu(d_bn3(conv2d(h2, self.df_dim*8, d_h=2,d_w=2,name='d_h3_conv')))
-        h4 = linear(tf.reshape(h3, [self.batch_size, -1]), 1, 'd_h3_lin')
-        return tf.nn.sigmoid(h4)
+        h3 = lrelu(d_bn3(conv2d(h2, self.df_dim*8, k_h=3,k_w=3,d_h=2,d_w=2,name='d_h3_conv')))
+        h4 = linear(tf.reshape(h3, [self.batch_size, -1]), 512, 'd_h4_lin')
+	h5 = linear(h4, 1, 'd_h5_lin')
+        return tf.nn.sigmoid(h5)
+
+
     def sampler(self,nir):
 	tf.get_variable_scope().reuse_variables()
 	g_bn0 = batch_norm(self.batch_size,name='g_bn0')
