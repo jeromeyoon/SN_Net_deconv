@@ -89,8 +89,8 @@ class DCGAN(object):
         data_label = json.load(open("/research2/ECCV_journal/with_light/json/traingt.json"))
         datalist =[data[idx] for idx in xrange(0,len(data))]
         labellist =[data_label[idx] for idx in xrange(0,len(data))]
-	shuffle(datalist)
-	shuffle(labellist)
+	#shuffle(datalist)
+	#shuffle(labellist)
 
         list_val = [11,16,21,22,33,36,38,53,59,92]
 
