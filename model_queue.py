@@ -1,15 +1,13 @@
 import os,time,pdb,argparse,threading
-import time
 from glob import glob
 import numpy as np
 from numpy import inf
 import tensorflow as tf
-import pdb
-#from tensorflow.python.ops.script_ops import *
 from ops import *
 from utils import *
 from random import shuffle
 from network import networks
+import scipy.ndimage
 class DCGAN(object):
     def __init__(self, sess, image_size=108, is_train=True,is_crop=True,\
                  batch_size=32,num_block=1,ir_image_shape=[64, 64,1], normal_image_shape=[64, 64, 3],\
@@ -28,8 +26,8 @@ class DCGAN(object):
         self.checkpoint_dir = checkpoint_dir
 	self.use_queue = True
 	self.mean_nir = -0.3313 #-1~1
+	self.dropout =0.7
 	self.build_model()
-
     def build_model(self):
 	
 	if not self.use_queue:
@@ -42,13 +40,14 @@ class DCGAN(object):
 		print ' using queue loading'
 		self.ir_image_single = tf.placeholder(tf.float32,shape=self.ir_image_shape)
 		self.normal_image_single = tf.placeholder(tf.float32,shape=self.normal_image_shape)
-		q = tf.FIFOQueue(1000,[tf.float32,tf.float32],[[self.ir_image_shape[0],self.ir_image_shape[1],1],[self.normal_image_shape[0],self.normal_image_shape[1],3]])
+		q = tf.FIFOQueue(10000,[tf.float32,tf.float32],[[self.ir_image_shape[0],self.ir_image_shape[1],1],[self.normal_image_shape[0],self.normal_image_shape[1],3]])
 		self.enqueue_op = q.enqueue([self.ir_image_single,self.normal_image_single])
 		self.ir_images, self.normal_images = q.dequeue_many(self.batch_size)
+	self.keep_prob = tf.placeholder(tf.float32)
 	net  = networks(self.num_block,self.batch_size,self.df_dim)
 	self.G = net.generator(self.ir_images)
-	self.D = net.discriminator(self.normal_images)
-	self.D_  = net.discriminator(self.G,reuse=True)
+	self.D = net.discriminator(self.normal_images,self.keep_prob)
+	self.D_  = net.discriminator(self.G,self.keep_prob,reuse=True)
 
 	# generated surface normal
         self.d_loss_real = binary_cross_entropy_with_logits(tf.ones_like(self.D), self.D)
@@ -58,7 +57,7 @@ class DCGAN(object):
         self.g_loss = binary_cross_entropy_with_logits(tf.ones_like(self.D_), self.D_)
         self.gen_loss = self.g_loss + self.L1_loss
 
-	self.saver = tf.train.Saver(max_to_keep=0)
+	self.saver = tf.train.Saver(max_to_keep=10)
 	t_vars = tf.trainable_variables()
 	self.d_vars =[var for var in t_vars if 'd_' in var.name]
 	self.g_vars =[var for var in t_vars if 'g_' in var.name]
@@ -89,9 +88,7 @@ class DCGAN(object):
         data_label = json.load(open("/research2/ECCV_journal/with_light/json/traingt.json"))
         datalist =[data[idx] for idx in xrange(0,len(data))]
         labellist =[data_label[idx] for idx in xrange(0,len(data))]
-	#shuffle(datalist)
-	#shuffle(labellist)
-
+	shuf = range(len(data))
         list_val = [11,16,21,22,33,36,38,53,59,92]
 
 
@@ -100,7 +97,7 @@ class DCGAN(object):
 	    coord = tf.train.Coordinator()
             num_thread =32
             for i in range(num_thread):
- 	        t = threading.Thread(target=self.load_and_enqueue,args=(coord,datalist,labellist,i,num_thread))
+ 	        t = threading.Thread(target=self.load_and_enqueue,args=(coord,datalist,labellist,shuf,i,num_thread))
 	 	t.start()
 
 	if self.use_queue:
@@ -109,6 +106,8 @@ class DCGAN(object):
 	        batch_idxs = min(len(data), config.train_size)/config.batch_size
 		sum_L1 = 0.0
 		sum_g =0.0
+		sum_d_real =0.0
+		sum_d_fake =0.0
 		if epoch ==0:
 		    train_log = open(os.path.join("logs",'train_%s.log' %config.dataset),'w')
 		else:
@@ -116,13 +115,15 @@ class DCGAN(object):
 
 		for idx in xrange(0,batch_idxs):
         	     start_time = time.time()
-		     _,d_loss_real,d_loss_fake =self.sess.run([d_optim,self.d_loss_real,self.d_loss_fake])
-		     _,g_loss,L1_loss =self.sess.run([g_optim,self.g_loss,self.L1_loss])
+		     _,d_loss_real,d_loss_fake =self.sess.run([d_optim,self.d_loss_real,self.d_loss_fake],feed_dict={self.keep_prob:self.dropout})
+		     _,g_loss,L1_loss =self.sess.run([g_optim,self.g_loss,self.L1_loss],feed_dict={self.keep_prob:self.dropout})
 		     print("Epoch: [%2d] [%4d/%4d] time: %4.4f g_loss: %.6f L1_loss:%.4f d_loss_real:%.4f d_loss_fake:%.4f" \
 		     % (epoch, idx, batch_idxs,time.time() - start_time,g_loss,L1_loss,d_loss_real,d_loss_fake))
 		     sum_L1 += L1_loss 	
-		     sum_g += g_loss	
-		train_log.write('epoch %06d mean_g %.6f  mean_L1 %.6f\n' %(epoch,sum_g/(batch_idxs),sum_L1/(batch_idxs)))
+		     sum_g += g_loss
+		     sum_d_real += d_loss_real
+	  	     sum_d_fake += d_loss_fake	
+		train_log.write('epoch %06d mean_g %.6f  mean_L1 %.6f d_real %.6f d_fake %.6f\n' %(epoch,sum_g/(batch_idxs),sum_L1/(batch_idxs),sum_d_real/(batch_idxs),sum_d_fake/batch_idxs))
 		train_log.close()
 	        self.save(config.checkpoint_dir,global_step)
 
@@ -181,17 +182,21 @@ class DCGAN(object):
             return False
 
 	    
-    def load_and_enqueue(self,coord,file_list,label_list,idx=0,num_thread=1):
+    def load_and_enqueue(self,coord,file_list,label_list,shuf,idx=0,num_thread=1):
 	count =0;
 	length = len(file_list)
+	rot=[0,90,180,270]
 	while not coord.should_stop():
 	    i = (count*num_thread + idx) % length;
-            input_img = scipy.misc.imread(file_list[i]).reshape([224,224,1]).astype(np.float32)
-	    gt_img = scipy.misc.imread(label_list[i]).reshape([224,224,3]).astype(np.float32)
+	    r = random.randint(0,2)
+            input_img = scipy.misc.imread(file_list[shuf[i]]).reshape([224,224,1]).astype(np.float32)
+	    gt_img = scipy.misc.imread(label_list[shuf[i]]).reshape([224,224,3]).astype(np.float32)
 	    input_img = input_img/127.5 -1.
 	    gt_img = gt_img/127.5 -1.
 	    rand_x = np.random.randint(64,224-64)
 	    rand_y = np.random.randint(64,224-64)
+	    input_img = scipy.ndimage.rotate(input_img,rot[r])
+	    gt_img = scipy.ndimage.rotate(gt_img,rot[r])
             self.sess.run(self.enqueue_op,feed_dict={self.ir_image_single:input_img[rand_y:rand_y+64,rand_x:rand_x+64],self.normal_image_single:gt_img[rand_y:rand_y+64,rand_x:rand_x+64]})
 	    count +=1
 		

@@ -1,20 +1,13 @@
 import numpy as np
 import os
 import tensorflow as tf
-import random
-import time 
-import json
+import random,time,json,pdb,scipy.misc,glob
 from model_queue import DCGAN
 from test import EVAL
 from utils import pp, save_images, to_json, make_gif, merge, imread, get_image
-import scipy.misc
 from numpy import inf
-import glob
 from sorting import natsorted
-import pdb
 import matplotlib.image as mpimg
-#import cv2
-import time
 flags = tf.app.flags
 flags.DEFINE_integer("epoch", 1000, "Epoch to train [25]")
 flags.DEFINE_float("g_learning_rate", 0.0002, "Learning rate of for adam [0.0002]")
@@ -74,7 +67,6 @@ def main(_):
 		model = trained_models[4]
 		model = model.split('/')
 		model = model[-1]
-	        pdb.set_trace()
 		dcgan.load(FLAGS.checkpoint_dir,model)
                 for idx in xrange(len(fulldatapath)):
 		    input_= scipy.misc.imread(fulldatapath[idx]).astype(float)
@@ -152,14 +144,12 @@ def main(_):
 		save_files = glob.glob(os.path.join(FLAGS.checkpoint_dir,FLAGS.dataset,'DCGAN.model*'))
 		save_files  = natsorted(save_files)
 		savepath ='./Deconv_L1_result'
-		pdb.set_trace()
 		if not os.path.exists(os.path.join(savepath)):
 		    os.makedirs(os.path.join(savepath))
                 for m in range(len(selec_model)):
 		    model = save_files[selec_model[m]]
 		    model = model.split('/')
 		    model = model[-1]
-		    pdb.set_trace()
 		    dcgan.load(FLAGS.checkpoint_dir,model)
 	            for idx in range(len(list_val)):
 		        if not os.path.exists(os.path.join(savepath,'%03d' %list_val[idx])):
