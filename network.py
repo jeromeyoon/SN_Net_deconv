@@ -14,7 +14,7 @@ class networks(object):
             g_bn_block = batch_norm(self.batch_size,name='g_bn2_%s' %ii)
             block =tf.nn.relu(g_bn_block(conv2d(block,20,k_h=3,k_w=3,name='g_nir2_%s' %ii)))
         g_bn_block = batch_norm(self.batch_size,name='g_bn_deconv')
-        final =tf.nn.relu(gn_bn_block(deconv2d(block,[self.batch_size,nir.get_shape().as_list()[1],nir.get_shape().as_list()[2],self.df_dim],name='g_deconv',with_w=False)))
+        final =tf.nn.relu(g_bn_block(deconv2d(block,[self.batch_size,nir.get_shape().as_list()[1],nir.get_shape().as_list()[2],self.df_dim],name='g_deconv',with_w=False)))
         final =conv2d(final,3,k_w=1,k_h=1,name='g_end')
 	return tf.nn.tanh(final)
 
