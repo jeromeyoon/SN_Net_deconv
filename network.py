@@ -36,13 +36,14 @@ class networks(object):
 
     def sampler(self,nir):
 	tf.get_variable_scope().reuse_variables()
-	g_bn0 = batch_norm(self.batch_size,name='g_bn0')
         h0 =tf.nn.relu(conv2d(nir,self.df_dim,d_h=2,d_w=2,name='g_nir0'))
 	g_bn1 = batch_norm(self.batch_size,name='g_bn1')
         block =tf.nn.relu(g_bn1(conv2d(h0,20,k_h=1,k_w=1,name='g_nir1'),train=False))
 	for ii in range(self.num_block):
             g_bn_block = batch_norm(self.batch_size,name='g_bn2_%s' %ii)
             block =tf.nn.relu(g_bn_block(conv2d(block,20,k_h=3,k_w=3,name='g_nir2_%s' %ii),train=False))
-        final =deconv2d(block,[self.batch_size,nir.get_shape().as_list()[1],nir.get_shape().as_list()[2],3],name='g_end',with_w=False)
+	g_bn_block = batch_norm(self.batch_size,name='g_bn_deconv')
+        final =tf.nn.relu(g_bn_block(deconv2d(block,[self.batch_size,nir.get_shape().as_list()[1],nir.get_shape().as_list()[2],self.df_dim],name='g_deconv',with_w=False),train=False))
+        final =conv2d(final,3,k_w=1,k_h=1,name='g_end')
 	return tf.nn.tanh(final)
 
