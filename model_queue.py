@@ -53,9 +53,9 @@ class DCGAN(object):
         self.d_loss_real = binary_cross_entropy_with_logits(tf.ones_like(self.D), self.D)
         self.d_loss_fake = binary_cross_entropy_with_logits(tf.zeros_like(self.D_), self.D_)
         self.d_loss = self.d_loss_real + self.d_loss_fake
-        self.L1_loss = tf.reduce_mean(tf.abs(tf.sub(self.G,self.normal_images)))
+        self.L1_loss = tf.div(tf.reduce_sum(tf.square(tf.sub(self.G,self.normal_images))),self.ir_image_shape[0]*self.ir_image_shape[1]*3)
         self.g_loss = binary_cross_entropy_with_logits(tf.ones_like(self.D_), self.D_)
-        self.gen_loss = self.g_loss + self.L1_loss
+        self.gen_loss = self.g_loss + self.L1_loss *100
 
 	self.saver = tf.train.Saver(max_to_keep=10)
 	t_vars = tf.trainable_variables()
