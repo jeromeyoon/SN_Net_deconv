@@ -40,20 +40,21 @@ class DCGAN(object):
 		print ' using queue loading'
 		self.ir_image_single = tf.placeholder(tf.float32,shape=self.ir_image_shape)
 		self.normal_image_single = tf.placeholder(tf.float32,shape=self.normal_image_shape)
-		q = tf.FIFOQueue(10000,[tf.float32,tf.float32],[[self.ir_image_shape[0],self.ir_image_shape[1],1],[self.normal_image_shape[0],self.normal_image_shape[1],3]])
+		q = tf.FIFOQueue(4000,[tf.float32,tf.float32],[[self.ir_image_shape[0],self.ir_image_shape[1],1],[self.normal_image_shape[0],self.normal_image_shape[1],3]])
 		self.enqueue_op = q.enqueue([self.ir_image_single,self.normal_image_single])
 		self.ir_images, self.normal_images = q.dequeue_many(self.batch_size)
+        self.ir_test = tf.placeholder(tf.float32, [1,600,800,1],name='ir_test')
 	self.keep_prob = tf.placeholder(tf.float32)
 	net  = networks(self.num_block,self.batch_size,self.df_dim)
 	self.G = net.generator(self.ir_images)
-	self.D = net.discriminator(self.normal_images,self.keep_prob)
-	self.D_  = net.discriminator(self.G,self.keep_prob,reuse=True)
+	self.D = net.discriminator(tf.concat(3,[self.normal_images,self.ir_images]),self.keep_prob)
+	self.D_  = net.discriminator(tf.concat(3,[self.G,self.ir_images]),self.keep_prob,reuse=True)
 
 	# generated surface normal
         self.d_loss_real = binary_cross_entropy_with_logits(tf.ones_like(self.D), self.D)
         self.d_loss_fake = binary_cross_entropy_with_logits(tf.zeros_like(self.D_), self.D_)
         self.d_loss = self.d_loss_real + self.d_loss_fake
-        self.L1_loss = tf.div(tf.reduce_sum(tf.square(tf.sub(self.G,self.normal_images))),self.ir_image_shape[0]*self.ir_image_shape[1]*3)
+        self.L1_loss = tf.reduce_mean(tf.square(tf.sub(self.G,self.normal_images)))
         self.g_loss = binary_cross_entropy_with_logits(tf.ones_like(self.D_), self.D_)
         self.gen_loss = self.g_loss + self.L1_loss *100
 
@@ -84,7 +85,6 @@ class DCGAN(object):
 
         # loda training and validation dataset path
         data = json.load(open("/research2/ECCV_journal/with_light/json/traininput.json"))
-        data_light = json.load(open("/research2/ECCV_journal/with_light/json/trainlight.json"))
         data_label = json.load(open("/research2/ECCV_journal/with_light/json/traingt.json"))
         datalist =[data[idx] for idx in xrange(0,len(data))]
         labellist =[data_label[idx] for idx in xrange(0,len(data))]
@@ -95,7 +95,7 @@ class DCGAN(object):
 	if self.use_queue:
 	    # creat thread
 	    coord = tf.train.Coordinator()
-            num_thread =32
+            num_thread =16
             for i in range(num_thread):
  	        t = threading.Thread(target=self.load_and_enqueue,args=(coord,datalist,labellist,shuf,i,num_thread))
 	 	t.start()
@@ -126,6 +126,18 @@ class DCGAN(object):
 		train_log.write('epoch %06d mean_g %.6f  mean_L1 %.6f d_real %.6f d_fake %.6f\n' %(epoch,sum_g/(batch_idxs),sum_L1/(batch_idxs),sum_d_real/(batch_idxs),sum_d_fake/batch_idxs))
 		train_log.close()
 	        self.save(config.checkpoint_dir,global_step)
+		####### Validation #########
+		for idx2 in xrange(0,len(list_val)):
+		    for tilt in range(1,10):	
+		        print("Epoch: [%2d] [%4d/%4d] " % (epoch, idx2, len(list_val)))
+		        img = '/research2/IR_normal_small/save%03d/%d' % (list_val[idx2],tilt)
+			input_ = scipy.misc.imread(img+'/3.bmp').astype(float)
+			input_ = scipy.misc.imresize(input_,[600,800])
+			input_ = input_/127.5 - 1.0
+			input_ = np.reshape(input_,[1,600,800,1])
+			gt_ = scipy.misc.imread(img+'/12_Normal.bmp').astype(float)
+ 		        sample = self.sess.run([self.sampler],feed_dict={self.ir_test: input_})
+			
 
 
 	else:

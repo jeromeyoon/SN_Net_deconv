@@ -6,18 +6,18 @@ class networks(object):
 	self.num_block = num_block
 	self.batch_size = batch_size
 	self.df_dim = df_dim
+  
     def generator(self,nir):
-        g_nir0 =tf.nn.relu(conv2d(nir,self.df_dim,name='g_nir0'))
+	g_bn0 = batch_norm(self.batch_size,name='g_bn0')
+        g_nir0 =tf.nn.relu(g_bn0(conv2d(nir,self.df_dim*2,name='g_nir0')))
 	g_bn1 = batch_norm(self.batch_size,name='g_bn1')
-        g_nir1 =tf.nn.relu(g_bn1(conv2d(g_nir0,self.df_dim*8,name='g_nir1')))
+        g_nir1 =tf.nn.relu(g_bn1(conv2d(g_nir0,self.df_dim*4,name='g_nir1')))
 	g_bn2 = batch_norm(self.batch_size,name='g_bn2')
         g_nir2 =tf.nn.relu(g_bn2(conv2d(g_nir1,self.df_dim*4,name='g_nir2')))
 	g_bn3 = batch_norm(self.batch_size,name='g_bn3')
         g_nir3 =tf.nn.relu(g_bn3(conv2d(g_nir2,self.df_dim*2,name='g_nir3')))
-	g_bn4 = batch_norm(self.batch_size,name='g_bn4')
-        g_nir4 =tf.nn.relu(g_bn4(conv2d(g_nir3,self.df_dim,name='g_nir4')))
-        g_nir5 =conv2d(g_nir4,3,name='g_nir5')
-	return tf.tanh(g_nir5)
+        g_nir4 =conv2d(g_nir3,3,k_h=1,k_w=1,name='g_nir5')
+	return tf.tanh(g_nir4)
 
 
     def discriminator(self, image,keep_prob, reuse=False):
@@ -38,15 +38,13 @@ class networks(object):
 
     def sampler(self,nir):
 	tf.get_variable_scope().reuse_variables()
-	g_nir0 =tf.nn.relu(conv2d(nir,self.df_dim,name='g_nir0'))
+	g_nir0 =tf.nn.relu(conv2d(nir,self.df_dim*2,name='g_nir0'))
 	g_bn1 = batch_norm(self.batch_size,name='g_bn1')
-        g_nir1 =tf.nn.relu(g_bn1(conv2d(g_nir0,self.df_dim*8,name='g_nir1'),train=False))
+        g_nir1 =tf.nn.relu(g_bn1(conv2d(g_nir0,self.df_dim*4,name='g_nir1'),train=False))
 	g_bn2 = batch_norm(self.batch_size,name='g_bn2')
         g_nir2 =tf.nn.relu(g_bn2(conv2d(g_nir1,self.df_dim*4,name='g_nir2'),train=False))
 	g_bn3 = batch_norm(self.batch_size,name='g_bn3')
         g_nir3 =tf.nn.relu(g_bn3(conv2d(g_nir2,self.df_dim*2,name='g_nir3'),train=False))
-	g_bn4 = batch_norm(self.batch_size,name='g_bn4')
-        g_nir4 =tf.nn.relu(g_bn4(conv2d(g_nir3,self.df_dim,name='g_nir4'),train=False))
-        g_nir5 =conv2d(g_nir4,3,name='g_nir5')
-	return tf.tanh(g_nir5)
+        g_nir4 =conv2d(g_nir3,3,k_h=1,k_w=1,name='g_nir5')
+	return tf.tanh(g_nir4)
 

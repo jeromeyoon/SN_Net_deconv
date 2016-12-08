@@ -11,12 +11,12 @@ import matplotlib.image as mpimg
 flags = tf.app.flags
 flags.DEFINE_integer("epoch", 1000, "Epoch to train [25]")
 flags.DEFINE_float("g_learning_rate", 0.0002, "Learning rate of for adam [0.0002]")
-flags.DEFINE_float("d_learning_rate", 0.00001, "Learning rate of for adam [0.0002]")
+flags.DEFINE_float("d_learning_rate", 0.0002, "Learning rate of for adam [0.0002]")
 flags.DEFINE_float("beta1", 0.5, "Momentum term of adam [0.5]")
 flags.DEFINE_integer("train_size", np.inf, "The size of train images [np.inf]")
-flags.DEFINE_integer("batch_size", 64, "The size of batch images [64]")
+flags.DEFINE_integer("batch_size", 128, "The size of batch images [64]")
 flags.DEFINE_integer("image_size", 108, "The size of image to use (will be center cropped) [108]")
-flags.DEFINE_string("dataset", "sn_net", "The name of dataset [celebA, mnist, lsun]")
+flags.DEFINE_string("dataset", "sn_net_pair", "The name of dataset [celebA, mnist, lsun]")
 flags.DEFINE_string("checkpoint_dir", "checkpoint", "Directory name to save the checkpoints [checkpoint]")
 flags.DEFINE_string("sample_dir", "output", "Directory name to save the image samples [samples]")
 flags.DEFINE_boolean("is_train", False, "True for training, False for testing [False]")
@@ -146,6 +146,7 @@ def main(_):
 		savepath ='./Deconv_L1_result'
 		if not os.path.exists(os.path.join(savepath)):
 		    os.makedirs(os.path.join(savepath))
+		pdb.set_trace()
                 for m in range(len(selec_model)):
 		    model = save_files[selec_model[m]]
 		    model = model.split('/')
