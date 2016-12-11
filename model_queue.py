@@ -27,6 +27,8 @@ class DCGAN(object):
 	self.use_queue = True
 	self.mean_nir = -0.3313 #-1~1
 	self.dropout =0.7
+	self.loss ='L2'
+	self.pair = 'None'
 	self.build_model()
     def build_model(self):
 	
@@ -49,16 +51,23 @@ class DCGAN(object):
 	net  = networks(self.num_block,self.batch_size,self.df_dim)
 	self.G = net.generator(self.ir_images)
 	#self.sample = net.sampler(self.ir_test)
-	self.D = net.discriminator(tf.concat(3,[self.normal_images,self.ir_images]),self.keep_prob)
-	self.D_  = net.discriminator(tf.concat(3,[self.G,self.ir_images]),self.keep_prob,reuse=True)
+	if self.pair:
+	    self.D = net.discriminator(tf.concat(3,[self.normal_images,self.ir_images]),self.keep_prob)
+	    self.D_  = net.discriminator(tf.concat(3,[self.G,self.ir_images]),self.keep_prob,reuse=True)
+	else:
+	    self.D = net.discriminator(self.normal_images,self.keep_prob)
+	    self.D_  = net.discriminator(self.G,self.keep_prob,reuse=True)
 
 	# generated surface normal
         self.d_loss_real = binary_cross_entropy_with_logits(tf.ones_like(self.D), self.D)
         self.d_loss_fake = binary_cross_entropy_with_logits(tf.zeros_like(self.D_), self.D_)
         self.d_loss = self.d_loss_real + self.d_loss_fake
-        self.L1_loss = tf.reduce_mean(tf.square(tf.sub(self.G,self.normal_images)))
+	if self.loss == 'L1':
+            self.L_loss = tf.div(tf.reduce_sum(tf.abs(tf.sub(self.G,self.normal_images))),self.ir_image_shape[1]*self.ir_image_shape[2]*3)
+	else:
+            self.L_loss = tf.div(tf.reduce_sum(tf.square(tf.sub(self.G,self.normal_images))),self.ir_image_shape[1]*self.ir_image_shape[2]*3)
         self.g_loss = binary_cross_entropy_with_logits(tf.ones_like(self.D_), self.D_)
-        self.gen_loss = self.g_loss + self.L1_loss *100
+        self.gen_loss = self.g_loss + self.L_loss *100
 
 	self.saver = tf.train.Saver(max_to_keep=10)
 	t_vars = tf.trainable_variables()
@@ -106,7 +115,7 @@ class DCGAN(object):
 	    for epoch in xrange(config.epoch):
 	        #shuffle = np.random.permutation(range(len(data)))
 	        batch_idxs = min(len(data), config.train_size)/config.batch_size
-		sum_L1 = 0.0
+		sum_L = 0.0
 		sum_g =0.0
 		sum_d_real =0.0
 		sum_d_fake =0.0
@@ -120,10 +129,10 @@ class DCGAN(object):
 		for idx in xrange(0,batch_idxs):
         	     start_time = time.time()
 		     _,d_loss_real,d_loss_fake =self.sess.run([d_optim,self.d_loss_real,self.d_loss_fake],feed_dict={self.keep_prob:self.dropout})
-		     _,g_loss,L1_loss =self.sess.run([g_optim,self.g_loss,self.L1_loss],feed_dict={self.keep_prob:self.dropout})
-		     print("Epoch: [%2d] [%4d/%4d] time: %4.4f g_loss: %.6f L1_loss:%.4f d_loss_real:%.4f d_loss_fake:%.4f" \
+		     _,g_loss,L_loss =self.sess.run([g_optim,self.g_loss,self.L_loss],feed_dict={self.keep_prob:self.dropout})
+		     print("Epoch: [%2d] [%4d/%4d] time: %4.4f g_loss: %.6f L_loss:%.4f d_loss_real:%.4f d_loss_fake:%.4f" \
 		     % (epoch, idx, batch_idxs,time.time() - start_time,g_loss,L1_loss,d_loss_real,d_loss_fake))
-		     sum_L1 += L1_loss 	
+		     sum_L += L_loss 	
 		     sum_g += g_loss
 		     sum_d_real += d_loss_real
 	  	     sum_d_fake += d_loss_fake	
