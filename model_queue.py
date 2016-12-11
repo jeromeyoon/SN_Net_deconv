@@ -43,10 +43,12 @@ class DCGAN(object):
 		q = tf.FIFOQueue(4000,[tf.float32,tf.float32],[[self.ir_image_shape[0],self.ir_image_shape[1],1],[self.normal_image_shape[0],self.normal_image_shape[1],3]])
 		self.enqueue_op = q.enqueue([self.ir_image_single,self.normal_image_single])
 		self.ir_images, self.normal_images = q.dequeue_many(self.batch_size)
-        self.ir_test = tf.placeholder(tf.float32, [1,600,800,1],name='ir_test')
+
+        #self.ir_test = tf.placeholder(tf.float32, [1,600,800,1],name='ir_test')
 	self.keep_prob = tf.placeholder(tf.float32)
 	net  = networks(self.num_block,self.batch_size,self.df_dim)
 	self.G = net.generator(self.ir_images)
+	#self.sample = net.sampler(self.ir_test)
 	self.D = net.discriminator(tf.concat(3,[self.normal_images,self.ir_images]),self.keep_prob)
 	self.D_  = net.discriminator(tf.concat(3,[self.G,self.ir_images]),self.keep_prob,reuse=True)
 
@@ -110,8 +112,10 @@ class DCGAN(object):
 		sum_d_fake =0.0
 		if epoch ==0:
 		    train_log = open(os.path.join("logs",'train_%s.log' %config.dataset),'w')
+		    val_log = open(os.path.join("logs",'val_%s.log' %config.dataset),'w')
 		else:
 	    	    train_log = open(os.path.join("logs",'train_%s.log' %config.dataset),'aw')
+		    val_log = open(os.path.join("logs",'val_%s.log' %config.dataset),'w')
 
 		for idx in xrange(0,batch_idxs):
         	     start_time = time.time()
@@ -126,19 +130,26 @@ class DCGAN(object):
 		train_log.write('epoch %06d mean_g %.6f  mean_L1 %.6f d_real %.6f d_fake %.6f\n' %(epoch,sum_g/(batch_idxs),sum_L1/(batch_idxs),sum_d_real/(batch_idxs),sum_d_fake/batch_idxs))
 		train_log.close()
 	        self.save(config.checkpoint_dir,global_step)
+		"""
 		####### Validation #########
 		for idx2 in xrange(0,len(list_val)):
 		    for tilt in range(1,10):	
 		        print("Epoch: [%2d] [%4d/%4d] " % (epoch, idx2, len(list_val)))
 		        img = '/research2/IR_normal_small/save%03d/%d' % (list_val[idx2],tilt)
-			input_ = scipy.misc.imread(img+'/3.bmp').astype(float)
+			light = random.randint(1,12)
+			input_ = scipy.misc.imread(img+'/%d3.bmp' %light).astype(float)
 			input_ = scipy.misc.imresize(input_,[600,800])
 			input_ = input_/127.5 - 1.0
 			input_ = np.reshape(input_,[1,600,800,1])
 			gt_ = scipy.misc.imread(img+'/12_Normal.bmp').astype(float)
- 		        sample = self.sess.run([self.sampler],feed_dict={self.ir_test: input_})
+			gt_ = gt_/127.5 -1.0
+ 		        sample = self.sess.run([self.sample],feed_dict={self.ir_test: input_})
+			L1_loss = tf.reduce_mean(tf.square(tf.sub(sample,gt_)))
+			sum_L1 += L1_loss
 			
-
+		val_log.write('epoch %06d mean_L1 %.6f \n' %(epoch,sum_L1/(len(range(1,10)*len(list_val)))))
+		val_log.close()
+		"""
 
 	else:
 	    for epoch in xrange(config.epoch):

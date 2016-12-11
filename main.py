@@ -139,14 +139,14 @@ def main(_):
 
 	    elif VAL_OPTION ==3: # depends on light sources 
                 list_val = [11,16,21,22,33,36,38,53,59,92]
-		selec_model=[-2]
 		mean_nir = -0.3313 #-1~1
 		save_files = glob.glob(os.path.join(FLAGS.checkpoint_dir,FLAGS.dataset,'DCGAN.model*'))
 		save_files  = natsorted(save_files)
 		savepath ='./Deconv_L1_result'
 		if not os.path.exists(os.path.join(savepath)):
 		    os.makedirs(os.path.join(savepath))
-		pdb.set_trace()
+		selec_model=[]
+		[selec_model.append(ii) for ii in range(0,len(save_files),2)]
                 for m in range(len(selec_model)):
 		    model = save_files[selec_model[m]]
 		    model = model.split('/')
