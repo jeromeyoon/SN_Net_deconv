@@ -106,7 +106,7 @@ class DCGAN(object):
 	if self.use_queue:
 	    # creat thread
 	    coord = tf.train.Coordinator()
-            num_thread =16
+            num_thread =32
             for i in range(num_thread):
  	        t = threading.Thread(target=self.load_and_enqueue,args=(coord,datalist,labellist,shuf,i,num_thread))
 	 	t.start()
@@ -131,12 +131,12 @@ class DCGAN(object):
 		     _,d_loss_real,d_loss_fake =self.sess.run([d_optim,self.d_loss_real,self.d_loss_fake],feed_dict={self.keep_prob:self.dropout})
 		     _,g_loss,L_loss =self.sess.run([g_optim,self.g_loss,self.L_loss],feed_dict={self.keep_prob:self.dropout})
 		     print("Epoch: [%2d] [%4d/%4d] time: %4.4f g_loss: %.6f L_loss:%.4f d_loss_real:%.4f d_loss_fake:%.4f" \
-		     % (epoch, idx, batch_idxs,time.time() - start_time,g_loss,L1_loss,d_loss_real,d_loss_fake))
+		     % (epoch, idx, batch_idxs,time.time() - start_time,g_loss,L_loss,d_loss_real,d_loss_fake))
 		     sum_L += L_loss 	
 		     sum_g += g_loss
 		     sum_d_real += d_loss_real
 	  	     sum_d_fake += d_loss_fake	
-		train_log.write('epoch %06d mean_g %.6f  mean_L1 %.6f d_real %.6f d_fake %.6f\n' %(epoch,sum_g/(batch_idxs),sum_L1/(batch_idxs),sum_d_real/(batch_idxs),sum_d_fake/batch_idxs))
+		train_log.write('epoch %06d mean_g %.6f  mean_L %.6f d_real %.6f d_fake %.6f\n' %(epoch,sum_g/(batch_idxs),sum_L/(batch_idxs),sum_d_real/(batch_idxs),sum_d_fake/batch_idxs))
 		train_log.close()
 	        self.save(config.checkpoint_dir,global_step)
 		"""
