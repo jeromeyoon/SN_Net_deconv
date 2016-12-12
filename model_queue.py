@@ -71,7 +71,7 @@ class DCGAN(object):
             self.L_loss = tf.div(tf.reduce_sum(tf.square(tf.sub(self.G,self.normal_images))),self.ir_image_shape[1]*self.ir_image_shape[2]*3)
         self.g_loss = binary_cross_entropy_with_logits(tf.ones_like(self.D_), self.D_)
 
-	self.ang_loss = norm_(self.G,self.normal_images,self.train_mask)
+	self.ang_loss = norm_(self.G,self.normal_images)
         self.gen_loss = self.g_loss + self.L_loss *100 + self.ang_loss *100
 
 	self.saver = tf.train.Saver(max_to_keep=10)
