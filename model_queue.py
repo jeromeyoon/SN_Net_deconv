@@ -59,8 +59,10 @@ class DCGAN(object):
 	    self.D_  = net.discriminator(self.G,self.keep_prob,reuse=True)
 
 	# generated surface normal
-        self.d_loss_real = binary_cross_entropy_with_logits(tf.ones_like(self.D), self.D)
-        self.d_loss_fake = binary_cross_entropy_with_logits(tf.zeros_like(self.D_), self.D_)
+        #self.d_loss_real = binary_cross_entropy_with_logits(tf.pack(np.random.uniform(0.7,1.2,size=(self.batch_size,1)).astype(np.float32)), self.D)
+        #self.d_loss_fake = binary_cross_entropy_with_logits(tf.pack(np.random.uniform(0.0,0.3,size=(self.batch_size,1)).astype(np.float32)), self.D_)
+        self.d_loss_real = binary_cross_entropy_with_logits(tf.random_uniform(self.D.get_shape(),minval=0.7,maxval=1.2,dtype=tf.float32,seed=0), self.D)
+        self.d_loss_fake = binary_cross_entropy_with_logits(tf.random_uniform(self.D.get_shape(),minval=0.0,maxval=0.3,dtype=tf.float32,seed=0), self.D_)
         self.d_loss = self.d_loss_real + self.d_loss_fake
 	if self.loss == 'L1':
             self.L_loss = tf.div(tf.reduce_sum(tf.abs(tf.sub(self.G,self.normal_images))),self.ir_image_shape[1]*self.ir_image_shape[2]*3)
@@ -106,7 +108,7 @@ class DCGAN(object):
 	if self.use_queue:
 	    # creat thread
 	    coord = tf.train.Coordinator()
-            num_thread =32
+            num_thread =16
             for i in range(num_thread):
  	        t = threading.Thread(target=self.load_and_enqueue,args=(coord,datalist,labellist,shuf,i,num_thread))
 	 	t.start()
