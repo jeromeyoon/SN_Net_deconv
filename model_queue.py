@@ -111,7 +111,7 @@ class DCGAN(object):
 	if self.use_queue:
 	    # creat thread
 	    coord = tf.train.Coordinator()
-            num_thread =16
+            num_thread =1
             for i in range(num_thread):
  	        t = threading.Thread(target=self.load_and_enqueue,args=(coord,datalist,labellist,shuf,i,num_thread))
 	 	t.start()
@@ -137,7 +137,7 @@ class DCGAN(object):
 		     _,d_loss_real,d_loss_fake =self.sess.run([d_optim,self.d_loss_real,self.d_loss_fake],feed_dict={self.keep_prob:self.dropout})
 		     _,g_loss,L_loss,ang_loss =self.sess.run([g_optim,self.g_loss,self.ang_loss,self.L_loss],feed_dict={self.keep_prob:self.dropout})
 		     print("Epoch: [%2d] [%4d/%4d] time: %4.4f g_loss: %.6f L_loss:%.4f ang_loss: %.6f d_loss_real:%.4f d_loss_fake:%.4f" \
-		     % (epoch, idx, batch_idxs,time.time() - start_time,g_loss,L_loss,d_loss_real,d_loss_fake))
+		     % (epoch, idx, batch_idxs,time.time() - start_time,g_loss,L_loss,ang_loss,d_loss_real,d_loss_fake))
 		     sum_L += L_loss 	
 		     sum_g += g_loss
 		     sum_ang += ang_loss
