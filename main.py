@@ -159,6 +159,8 @@ def main(_):
 		            for idx3 in range(1,13): # light source 
 			        print("Selected material %03d/%d" % (list_val[idx],idx2))
 			        img = '/research2/IR_normal_small/save%03d/%d' % (list_val[idx],idx2)
+				noise = np.random.rand(1,600,800,1)
+				#noise = np.random.uniform(-1,1,size=(1,600,800,1))
 			        input_ = scipy.misc.imread(img+'/%d.bmp' %idx3).astype(float) #input NIR image
 			        input_ = scipy.misc.imresize(input_,[600,800])
 			        input_  = input_/127.5 -1.0 # normalize -1 ~1
@@ -172,48 +174,11 @@ def main(_):
 			        mean_mask = mean_nir * mask
 			        #input_ = input_ - mean_mask	
 			        start_time = time.time() 
-			        sample0,sample1,sample2,sample3,sample4 = sess.run([dcgan.sampler0,dcgan.sampler1,dcgan.sampler2,dcgan.sampler3,dcgan.sampler4], feed_dict={dcgan.ir_images: input_})
+			        sample  = sess.run(dcgan.G, feed_dict={dcgan.ir_images: input_,dcgan.noise:noise})
 			        #sample = sess.run(dcgan.sampler, feed_dict={dcgan.ir_images: input_})
 			        print('time: %.8f' %(time.time()-start_time))     
 			        # normalization #
-				pdb.set_trace()
-			        sample0 = np.squeeze(sample0[:,:,:,0]).astype(np.float32)
-			        sample1 = np.squeeze(sample1[:,:,:,0]).astype(np.float32)
-			        sample2 = np.squeeze(sample2[:,:,:,0]).astype(np.float32)
-			        sample3 = np.squeeze(sample3[:,:,:,0]).astype(np.float32)
-			        sample4 = np.squeeze(sample4).astype(np.float32)
-				pdb.set_trace()
-				sample0  =np.reshape(sample0,[600,800,1])
-				sample1  =np.reshape(sample1,[600,800,1])
-				sample2  =np.reshape(sample2,[600,800,1])
-				sample3  =np.reshape(sample3,[600,800,1])
-				pdb.set_trace()
-				output0 = np.sqrt(np.sum(np.power(sample0,2),axis=2))
-			        output0 = np.expand_dims(output0,axis=-1)
-			        output0 = sample0/output0
-			        output0 = (output0+1.)/2.
-				output1 = np.sqrt(np.sum(np.power(sample1,2),axis=2))
-			        output1 = np.expand_dims(output1,axis=-1)
-			        output1 = sample1/output1
-			        output1 = (output1+1.)/2.
-				output2 = np.sqrt(np.sum(np.power(sample2,2),axis=2))
-			        output2 = np.expand_dims(output2,axis=-1)
-			        output2 = sample2/output2
-			        output2 = (output2+1.)/2.
-				output3 = np.sqrt(np.sum(np.power(sample3,2),axis=2))
-			        output3 = np.expand_dims(output3,axis=-1)
-			        output3 = sample3/output3
-			        output3 = (output3+1.)/2.
-				output4 = np.sqrt(np.sum(np.power(sample4,2),axis=2))
-			        output4 = np.expand_dims(output4,axis=-1)
-			        output4 = sample4/output4
-			        output4 = (output4+1.)/2.
-
-				pdb.set_trace()
-
-				"""
 			        sample = np.squeeze(sample).astype(np.float32)
-				pdb.set_trace()
 			        output = np.sqrt(np.sum(np.power(sample,2),axis=2))
 			        output = np.expand_dims(output,axis=-1)
 			        output = sample/output
@@ -222,7 +187,6 @@ def main(_):
 			            os.makedirs(os.path.join(savepath,'%03d/%d/%s' %(list_val[idx],idx2,model)))
 			        savename = os.path.join(savepath,'%03d/%d/%s/single_normal_%03d.bmp' % (list_val[idx],idx2,model,idx3))
 			        scipy.misc.imsave(savename, output)
-				"""
 
 
 if __name__ == '__main__':

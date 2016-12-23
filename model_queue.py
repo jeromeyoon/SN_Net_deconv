@@ -51,7 +51,7 @@ class DCGAN(object):
 	self.noise = tf.placeholder(tf.float32,[self.batch_size] + self.ir_image_shape, name = 'noise')
 	self.keep_prob = tf.placeholder(tf.float32)
 	net  = networks(self.num_block,self.batch_size,self.df_dim)
-	self.G = net.generator(self.ir_images)
+	self.G = net.generator(self.ir_images,self.noise)
 	#self.sample = net.sampler(self.ir_test)
 	if self.pair:
 	    self.D = net.discriminator(tf.concat(3,[self.normal_images,self.ir_images]),self.keep_prob)
