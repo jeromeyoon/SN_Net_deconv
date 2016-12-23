@@ -14,9 +14,9 @@ flags.DEFINE_float("g_learning_rate", 0.0002, "Learning rate of for adam [0.0002
 flags.DEFINE_float("d_learning_rate", 0.0002, "Learning rate of for adam [0.0002]")
 flags.DEFINE_float("beta1", 0.5, "Momentum term of adam [0.5]")
 flags.DEFINE_integer("train_size", np.inf, "The size of train images [np.inf]")
-flags.DEFINE_integer("batch_size", 128, "The size of batch images [64]")
+flags.DEFINE_integer("batch_size", 32, "The size of batch images [64]")
 flags.DEFINE_integer("image_size", 108, "The size of image to use (will be center cropped) [108]")
-flags.DEFINE_string("dataset", "1211_sn_net_pair", "The name of dataset [celebA, mnist, lsun]")
+flags.DEFINE_string("dataset", "1222_sn_net_pair", "The name of dataset [celebA, mnist, lsun]")
 flags.DEFINE_string("checkpoint_dir", "checkpoint", "Directory name to save the checkpoints [checkpoint]")
 flags.DEFINE_string("sample_dir", "output", "Directory name to save the image samples [samples]")
 flags.DEFINE_boolean("is_train", False, "True for training, False for testing [False]")
@@ -172,10 +172,48 @@ def main(_):
 			        mean_mask = mean_nir * mask
 			        #input_ = input_ - mean_mask	
 			        start_time = time.time() 
-			        sample = sess.run(dcgan.sampler, feed_dict={dcgan.ir_images: input_})
+			        sample0,sample1,sample2,sample3,sample4 = sess.run([dcgan.sampler0,dcgan.sampler1,dcgan.sampler2,dcgan.sampler3,dcgan.sampler4], feed_dict={dcgan.ir_images: input_})
+			        #sample = sess.run(dcgan.sampler, feed_dict={dcgan.ir_images: input_})
 			        print('time: %.8f' %(time.time()-start_time))     
 			        # normalization #
+				pdb.set_trace()
+			        sample0 = np.squeeze(sample0[:,:,:,0]).astype(np.float32)
+			        sample1 = np.squeeze(sample1[:,:,:,0]).astype(np.float32)
+			        sample2 = np.squeeze(sample2[:,:,:,0]).astype(np.float32)
+			        sample3 = np.squeeze(sample3[:,:,:,0]).astype(np.float32)
+			        sample4 = np.squeeze(sample4).astype(np.float32)
+				pdb.set_trace()
+				sample0  =np.reshape(sample0,[600,800,1])
+				sample1  =np.reshape(sample1,[600,800,1])
+				sample2  =np.reshape(sample2,[600,800,1])
+				sample3  =np.reshape(sample3,[600,800,1])
+				pdb.set_trace()
+				output0 = np.sqrt(np.sum(np.power(sample0,2),axis=2))
+			        output0 = np.expand_dims(output0,axis=-1)
+			        output0 = sample0/output0
+			        output0 = (output0+1.)/2.
+				output1 = np.sqrt(np.sum(np.power(sample1,2),axis=2))
+			        output1 = np.expand_dims(output1,axis=-1)
+			        output1 = sample1/output1
+			        output1 = (output1+1.)/2.
+				output2 = np.sqrt(np.sum(np.power(sample2,2),axis=2))
+			        output2 = np.expand_dims(output2,axis=-1)
+			        output2 = sample2/output2
+			        output2 = (output2+1.)/2.
+				output3 = np.sqrt(np.sum(np.power(sample3,2),axis=2))
+			        output3 = np.expand_dims(output3,axis=-1)
+			        output3 = sample3/output3
+			        output3 = (output3+1.)/2.
+				output4 = np.sqrt(np.sum(np.power(sample4,2),axis=2))
+			        output4 = np.expand_dims(output4,axis=-1)
+			        output4 = sample4/output4
+			        output4 = (output4+1.)/2.
+
+				pdb.set_trace()
+
+				"""
 			        sample = np.squeeze(sample).astype(np.float32)
+				pdb.set_trace()
 			        output = np.sqrt(np.sum(np.power(sample,2),axis=2))
 			        output = np.expand_dims(output,axis=-1)
 			        output = sample/output
@@ -184,7 +222,7 @@ def main(_):
 			            os.makedirs(os.path.join(savepath,'%03d/%d/%s' %(list_val[idx],idx2,model)))
 			        savename = os.path.join(savepath,'%03d/%d/%s/single_normal_%03d.bmp' % (list_val[idx],idx2,model,idx3))
 			        scipy.misc.imsave(savename, output)
-
+				"""
 
 
 if __name__ == '__main__':

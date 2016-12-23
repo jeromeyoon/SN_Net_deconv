@@ -30,7 +30,7 @@ class EVAL(object):
 
 	net  = networks(self.num_block,self.batch_size,self.df_dim)
         self.G = net.generator(self.ir_images)
-        self.sampler = net.sampler(self.ir_images)
+        self.sampler0,self.sampler1,self.sampler2,self.sampler3,self.sampler4 = net.sampler(self.ir_images)
         self.saver = tf.train.Saver()
 
 
