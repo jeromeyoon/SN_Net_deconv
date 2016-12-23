@@ -2,8 +2,7 @@ from ops import *
 import tensorflow as tf
 
 class networks(object):
-    def __init__(self,num_block,batch_size,df_dim):
-	self.num_block = num_block
+    def __init__(self,batch_size,df_dim):
 	self.batch_size = batch_size
 	self.df_dim = df_dim
   

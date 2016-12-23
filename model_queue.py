@@ -73,7 +73,7 @@ class DCGAN(object):
         self.g_loss = binary_cross_entropy_with_logits(tf.ones_like(self.D_), self.D_)
 
 	self.ang_loss = norm_(self.G,self.normal_images)
-        self.gen_loss = self.g_loss + self.L_loss *100 + self.ang_loss 
+        self.gen_loss = self.g_loss + self.L_loss + self.ang_loss 
 
 	self.saver = tf.train.Saver(max_to_keep=10)
 	t_vars = tf.trainable_variables()
@@ -112,7 +112,7 @@ class DCGAN(object):
 	if self.use_queue:
 	    # creat thread
 	    coord = tf.train.Coordinator()
-            num_thread =16
+            num_thread =8
             for i in range(num_thread):
  	        t = threading.Thread(target=self.load_and_enqueue,args=(coord,datalist,labellist,shuf,i,num_thread))
 	 	t.start()
@@ -136,7 +136,7 @@ class DCGAN(object):
 		for idx in xrange(0,batch_idxs):
         	     start_time = time.time()
 	    	     noise = np.random.rand(self.batch_size,64, 64,1)
-		     _,d_loss_real,d_loss_fake =self.sess.run([d_optim,self.d_loss_real,self.d_loss_fake],feed_dict={self.keep_prob:self.dropout})
+		     _,d_loss_real,d_loss_fake =self.sess.run([d_optim,self.d_loss_real,self.d_loss_fake],feed_dict={self.keep_prob:self.dropout, self.noise:noise})
 		     _,g_loss,L_loss,ang_loss =self.sess.run([g_optim,self.g_loss,self.ang_loss,self.L_loss],feed_dict={self.keep_prob:self.dropout,self.noise:noise})
 		     print("Epoch: [%2d] [%4d/%4d] time: %4.4f g_loss: %.6f L_loss:%.4f ang_loss: %.6f d_loss_real:%.4f d_loss_fake:%.4f" \
 		     % (epoch, idx, batch_idxs,time.time() - start_time,g_loss,L_loss,ang_loss,d_loss_real,d_loss_fake))

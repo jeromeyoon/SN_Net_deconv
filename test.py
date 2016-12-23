@@ -25,12 +25,13 @@ class EVAL(object):
 
         self.ir_images = tf.placeholder(tf.float32, [self.batch_size] + self.ir_image_shape,
                                     name='ir_images')
+        self.noise = tf.placeholder(tf.float32, [self.batch_size] + self.ir_image_shape,
+                                    name='ir_images')
         self.normal_images = tf.placeholder(tf.float32, [self.batch_size] + self.normal_image_shape,
                                     name='normal_images')
 
-	net  = networks(self.num_block,self.batch_size,self.df_dim)
-        self.G = net.generator(self.ir_images)
-        self.sampler0,self.sampler1,self.sampler2,self.sampler3,self.sampler4 = net.sampler(self.ir_images)
+	net  = networks(self.batch_size,self.df_dim)
+        self.G = net.generator(self.ir_images,self.noise)
         self.saver = tf.train.Saver()
 
 
